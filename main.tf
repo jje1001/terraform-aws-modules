@@ -1,7 +1,18 @@
 resource "aws_s3_bucket" "s3_bucket" {
   bucket = var.bucket_name
+  acl    = "private"
 
   tags = var.tags
+}
+
+# Block Public Access 비활성화
+resource "aws_s3_bucket_public_access_block" "s3_bucket" {
+  bucket = aws_s3_bucket.s3_bucket.id
+
+  block_public_acls       = false
+  ignore_public_acls      = false
+  block_public_policy     = false
+  restrict_public_buckets = false
 }
 
 resource "aws_s3_bucket_website_configuration" "s3_bucket" {
@@ -16,14 +27,9 @@ resource "aws_s3_bucket_website_configuration" "s3_bucket" {
   }
 }
 
-resource "aws_s3_bucket_acl" "s3_bucket" {
-  bucket = aws_s3_bucket.s3_bucket.id
-
-  acl = "public-read"
-}
-
 resource "aws_s3_bucket_policy" "s3_bucket" {
-  bucket = aws_s3_bucket.s3_bucket.id
+  depends_on = [aws_s3_bucket_public_access_block.s3_bucket] # 순서 보장
+  bucket     = aws_s3_bucket.s3_bucket.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -33,10 +39,7 @@ resource "aws_s3_bucket_policy" "s3_bucket" {
         Effect    = "Allow"
         Principal = "*"
         Action    = "s3:GetObject"
-        Resource = [
-          aws_s3_bucket.s3_bucket.arn,
-          "${aws_s3_bucket.s3_bucket.arn}/*",
-        ]
+        Resource  = "${aws_s3_bucket.s3_bucket.arn}/*"
       },
     ]
   })
