@@ -1,11 +1,10 @@
 resource "aws_s3_bucket" "s3_bucket" {
   bucket = var.bucket_name
-  acl    = "private"
 
   tags = var.tags
 }
 
-# Block Public Access 비활성화
+# Block Public Access 설정
 resource "aws_s3_bucket_public_access_block" "s3_bucket" {
   bucket = aws_s3_bucket.s3_bucket.id
 
@@ -28,7 +27,7 @@ resource "aws_s3_bucket_website_configuration" "s3_bucket" {
 }
 
 resource "aws_s3_bucket_policy" "s3_bucket" {
-  depends_on = [aws_s3_bucket_public_access_block.s3_bucket] # 순서 보장
+  depends_on = [aws_s3_bucket_public_access_block.s3_bucket]
   bucket     = aws_s3_bucket.s3_bucket.id
 
   policy = jsonencode({
